@@ -1,0 +1,7 @@
+* spring security chap04-03
+
+- 그룹 기반 권한부여 설정
+
+	1. 그룹 사용을 위해 JdbcDaoImpl 설정하기
+	
+		

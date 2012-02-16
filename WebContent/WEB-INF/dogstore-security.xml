@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd">
+
+	<http auto-config="true" use-expressions="true">
+		
+		<!-- Ch 4 Start -->
+		<intercept-url pattern="/login.do" access="permitAll"/>
+		<intercept-url pattern="/account/*.do" access="hasRole('ROLE_USER') and fullyAuthenticated"/>
+		<intercept-url pattern="/*" access="permitAll"/>
+		<form-login login-page="/login.do" />
+		
+	</http>
+ 
+	<!-- Ch 4-01 JdbcUserDetailsManager -->
+	<authentication-manager alias="authenticationManager">
+		<authentication-provider user-service-ref="userDetailsManager"/>
+	</authentication-manager>
+	
+		<!-- JdbcUserDetailsManager 빈을 선언해야 함 -->
+	<beans:bean id="userDetailsManager" class="org.springframework.security.provisioning.JdbcUserDetailsManager">
+		<beans:property name="dataSource" ref="dataSource"/>
+		<beans:property name="authenticationManager" ref="authenticationManager" />
+		<beans:property name="enableGroups" value="true"/>
+		<beans:property name="enableAuthorities" value="false"/>
+		<beans:property name="usersByUsernameQuery">
+			<beans:value>
+  SELECT USER_NAME AS USERNAME
+       , USER_PW AS PASSWORD
+       , USE_FLAG AS ENABLED
+    FROM ZZ_USERS 
+   WHERE NLS_UPPER(USER_NAME) = NLS_UPPER(?)
+			</beans:value>
+		</beans:property>
+		<beans:property name="groupAuthoritiesByUsernameQuery">
+			<beans:value>
+  SELECT G.GROUP_ID AS ID
+       , G.GROUP_NAME AS GROUP_NAME
+       , GA.AUTHORITY AS AUTHORITY
+    FROM ZZ_GROUPS G
+	   , ZZ_GROUP_MEMBERS GM
+	   , ZZ_GROUP_AUTHORITIES GA 
+   WHERE NLS_UPPER(GM.USER_NAME) = NLS_UPPER(?) 
+	 AND G.GROUP_ID = GA.GROUP_ID 
+	 AND G.GROUP_ID = GM.GROUP_ID
+			</beans:value>
+		</beans:property>
+		<beans:property name="changePasswordSql">
+			<beans:value>
+  UPDATE ZZ_USERS 
+     SET USER_PW = ? 
+   WHERE USER_NAME = ?  
+			</beans:value>
+		</beans:property>
+	</beans:bean>
+	
+	<!-- Ch 4 데이터베이스 설정 -->
+	<!-- jdbc-user-service id="userSetting" data-source-ref="dataSource"/-->	
+	
+</beans:beans>
